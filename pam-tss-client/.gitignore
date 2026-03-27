@@ -1,0 +1,5 @@
+.env
+.tss_client_creds
+__pycache__/
+*.pyc
+.venv/
