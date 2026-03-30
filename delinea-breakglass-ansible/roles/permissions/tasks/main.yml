@@ -1,0 +1,44 @@
+---
+- name: Check Existing Folder Permissions
+  ansible.builtin.uri:
+    url: "{{ base_url }}/api/v1/folders/{{ target_folder_id }}/permissions"
+    method: GET
+    headers: "{{ delinea_auth_header }}"
+    status_code: [200]
+    return_content: true
+  register: folder_perms
+
+- name: Assign AD Groups to Folder
+  ansible.builtin.uri:
+    url: "{{ base_url }}/api/v1/folders/{{ target_folder_id }}/permissions"
+    method: POST
+    headers: "{{ delinea_auth_header }}"
+    body_format: json
+    body:
+      groupId: "{{ item }}"
+      folderAccessRoleId: "{{ folder_access_role_id }}"
+    status_code: [200, 201, 409]
+  loop: "{{ assigned_group_ids }}"
+  when: (folder_perms.json.records | selectattr('groupId', 'equalto', item) | list | length) == 0
+
+- name: Check Existing Secret Permissions
+  ansible.builtin.uri:
+    url: "{{ base_url }}/api/v1/secrets/{{ target_secret_id }}/permissions"
+    method: GET
+    headers: "{{ delinea_auth_header }}"
+    status_code: [200]
+    return_content: true
+  register: secret_perms
+
+- name: Assign AD Groups to Secret
+  ansible.builtin.uri:
+    url: "{{ base_url }}/api/v1/secrets/{{ target_secret_id }}/permissions"
+    method: POST
+    headers: "{{ delinea_auth_header }}"
+    body_format: json
+    body:
+      groupId: "{{ item }}"
+      secretAccessRoleId: "{{ secret_access_role_id }}"
+    status_code: [200, 201, 409]
+  loop: "{{ assigned_group_ids }}"
+  when: (secret_perms.json.records | selectattr('groupId', 'equalto', item) | list | length) == 0

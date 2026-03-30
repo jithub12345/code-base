@@ -1,0 +1,47 @@
+---
+- name: Authenticate to Secret Server (OAuth Client Credentials)
+  ansible.builtin.uri:
+    url: "{{ base_url }}/oauth2/token"
+    method: POST
+    body_format: form-urlencoded
+    body:
+      grant_type: client_credentials
+    url_username: "{{ delinea_client_id }}"
+    url_password: "{{ delinea_client_secret }}"
+    force_basic_auth: true
+    status_code: [200]
+    return_content: true
+  register: auth_response_cc
+  no_log: true
+  failed_when: auth_response_cc.status == 401
+  when: delinea_client_id | d("") | length > 0
+
+- name: Authenticate to Secret Server (OAuth Password Grant Fallback)
+  ansible.builtin.uri:
+    url: "{{ base_url }}/oauth2/token"
+    method: POST
+    body_format: form-urlencoded
+    body:
+      grant_type: password
+      username: "{{ delinea_username }}"
+      password: "{{ delinea_password }}"
+    status_code: [200]
+    return_content: true
+  register: auth_response_pw
+  no_log: true
+  failed_when: auth_response_pw.status == 401
+  when: 
+    - delinea_client_id | d("") | length == 0
+    - delinea_username | d("") | length > 0
+
+- name: Validate Authentication Success
+  ansible.builtin.assert:
+    that:
+      - (auth_response_cc is not skipped and auth_response_cc.status == 200) or (auth_response_pw is not skipped and auth_response_pw.status == 200)
+    fail_msg: "ERROR: Authentication failed. Please provide either Client Credentials or Password Grant variables."
+
+- name: Set Auth Token Fact
+  ansible.builtin.set_fact:
+    delinea_auth_header:
+      Authorization: "Bearer {{ auth_response_cc.json.access_token if auth_response_cc is not skipped else auth_response_pw.json.access_token }}"
+  no_log: true

@@ -1,0 +1,8 @@
+---
+# Example Vault File. Encrypt with `ansible-vault encrypt` or securely populate.
+# vault_delinea_client_id: "your_client_id"
+# vault_delinea_client_secret: "your_client_secret"
+
+# Test credentials
+# vault_delinea_username: "user"
+# vault_delinea_password: "password"

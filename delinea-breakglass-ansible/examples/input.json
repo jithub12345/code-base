@@ -1,0 +1,9 @@
+{
+  "host_fqdn": "server01.corp.local",
+  "template_id": 6001,
+  "ad_groups": "BreakGlass_Admins, Domain_Admins, Security_Ops",
+  "domain": "corp.local",
+  "username": "breakglass_server01",
+  "password": "SuperSecretPassword123!",
+  "notes": "Provisioned by ansible automation"
+}

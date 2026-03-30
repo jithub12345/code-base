@@ -1,0 +1,10 @@
+---
+host_short_name: "server01"
+template_id: 6001
+ad_group_name: "BreakGlass_Admins"
+
+# Secret Fields (mapped by slug strictly matching Secret Server implementation)
+domain: "corp.local"
+username: "breakglass_server01"
+password: "SuperSecretPassword123!"
+notes: "Provisioned by ansible automation"

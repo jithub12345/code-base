@@ -1,0 +1,12 @@
+---
+delinea_base_url: "https://secrets.internal"
+
+# Access Controls
+# Common Native IDs in Secret Server: 
+# 1 = Owner, 2 = Editor, 3 = Viewer (Verify in your specific environment context)
+folder_access_role_id: 2
+secret_access_role_id: 2
+
+# Infrastructure Defaults
+parent_folder_id: 1
+site_id: 2

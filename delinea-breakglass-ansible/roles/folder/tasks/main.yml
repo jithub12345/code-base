@@ -1,0 +1,34 @@
+---
+- name: Check if Host Folder Exists
+  ansible.builtin.uri:
+    url: "{{ base_url }}/api/v1/folders?filter.searchText={{ host_short_name | urlencode }}&filter.parentFolderId={{ parent_folder_id | default(1) }}"
+    method: GET
+    headers: "{{ delinea_auth_header }}"
+    status_code: [200]
+    return_content: true
+  register: folder_search
+
+- name: Set Existing Folder ID
+  ansible.builtin.set_fact:
+    target_folder_id: "{{ (folder_search.json.records | selectattr('folderName', 'equalto', host_short_name) | first).id | default(None) }}"
+
+- name: Create Folder if it does not exist
+  ansible.builtin.uri:
+    url: "{{ base_url }}/api/v1/folders"
+    method: POST
+    headers: "{{ delinea_auth_header }}"
+    body_format: json
+    body:
+      folderName: "{{ host_short_name }}"
+      parentFolderId: "{{ parent_folder_id | default(1) }}"
+      folderTypeId: 1
+    status_code: [200, 201, 409]
+    return_content: true
+  register: create_folder
+  when: target_folder_id is none
+  changed_when: create_folder.status in [200, 201]
+
+- name: Update Target Folder ID after creation
+  ansible.builtin.set_fact:
+    target_folder_id: "{{ create_folder.json.id }}"
+  when: target_folder_id is none

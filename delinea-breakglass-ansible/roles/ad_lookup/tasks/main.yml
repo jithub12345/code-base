@@ -1,0 +1,39 @@
+---
+- name: Initialize assigned_group_ids list
+  ansible.builtin.set_fact:
+    assigned_group_ids: []
+
+- name: Lookup AD Groups in Secret Server
+  ansible.builtin.uri:
+    url: "{{ base_url }}/api/v1/groups?filter.searchText={{ item | urlencode }}&filter.includeInactive=false"
+    method: GET
+    headers: "{{ delinea_auth_header }}"
+    status_code: [200]
+    return_content: true
+  register: group_search_results
+  loop: "{{ groups_list }}"
+  loop_control:
+    label: "{{ item }}"
+
+- name: Extract Group IDs and validate AD objects
+  ansible.builtin.set_fact:
+    assigned_group_ids: >-
+      {{ 
+        assigned_group_ids + 
+        [((result.json.records | 
+           selectattr('name', 'equalto', result.item) | 
+           selectattr('domainId', 'defined') | 
+           selectattr('domainId', '>', 0) | 
+           first).id | default(None))]
+      }}
+  loop: "{{ group_search_results.results }}"
+  loop_control:
+    loop_var: result
+    label: "{{ result.item }}"
+
+- name: Validate all requested groups were found
+  ansible.builtin.assert:
+    that: 
+      - assigned_group_ids | length > 0
+      - None not in assigned_group_ids
+    fail_msg: "ERROR: One or more groups in '{{ ad_groups }}' were not found in Secret Server, or are not recognized as synced AD groups."

@@ -1,0 +1,45 @@
+---
+- name: Onboard Break-Glass Accounts to Delinea Secret Server
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  
+  vars_files:
+    - ../group_vars/all/vars.yml
+    
+  vars:
+    # State control
+    state: "present"
+    
+    # Derivations from input payload
+    host_short_name: "{{ host_fqdn.split('.')[0] }}"
+    secret_name: "{{ host_short_name }}"
+    groups_list: "{{ ad_groups.split(',') | map('trim') | list }}"
+    
+    # Base configuration overrides via env
+    base_url: "{{ lookup('env', 'DELINEA_BASE_URL') | default(delinea_base_url, true) }}"
+    
+    # Auth overrides via env
+    delinea_client_id: "{{ lookup('env', 'DELINEA_CLIENT_ID') | default(vault_delinea_client_id | default(''), true) }}"
+    delinea_client_secret: "{{ lookup('env', 'DELINEA_CLIENT_SECRET') | default(vault_delinea_client_secret | default(''), true) }}"
+    delinea_username: "{{ lookup('env', 'DELINEA_USERNAME') | default(vault_delinea_username | default(''), true) }}"
+    delinea_password: "{{ lookup('env', 'DELINEA_PASSWORD') | default(vault_delinea_password | default(''), true) }}"
+
+  pre_tasks:
+    - name: Validate strictly required inputs
+      ansible.builtin.assert:
+        that:
+          - host_fqdn is defined
+          - template_id is defined
+          - ad_groups is defined
+          - state in ['present', 'absent']
+        fail_msg: "ERROR: Missing required variables or invalid state. Ensure host_fqdn, template_id, ad_groups are defined."
+
+  roles:
+    - role: auth
+    - role: ad_lookup
+    - role: folder
+      when: state == 'present'
+    - role: secret
+    - role: permissions
+      when: state == 'present'

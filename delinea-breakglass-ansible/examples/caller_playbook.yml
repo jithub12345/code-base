@@ -1,0 +1,11 @@
+---
+- name: Wrapper Playbook to Call Delinea Onboarding
+  ansible.builtin.import_playbook: ../playbooks/onboard_breakglass.yml
+  vars:
+    host_fqdn: "dbserver02.corp.local"
+    template_id: 6001
+    ad_groups: "BreakGlass_Admins, Database_Admins"
+    domain: "corp.local"
+    username: "breakglass_dbserver02"
+    password: "AnotherSecurePassword123!"
+    notes: "Provisioned dynamically"
